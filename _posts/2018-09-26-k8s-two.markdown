@@ -89,11 +89,11 @@ open "http://localhost:$PORT"
 
 Process involved of above command:
 
-![](_image/k8s_session_2/k8s-svc-1.png)
+![](/assets/images/k8s_session_2/k8s-svc-1.png)
 
 Note: Kube-proxy added iptables rules which capture traffic to the Service port and redirect it to endpoints. For each endpoint object, it adds iptables rule which selects a Pod.
 
-![](_image/k8s_session_2/k8s-svc-2.png)
+![](/assets/images/k8s_session_2/k8s-svc-2.png)
 
 Delete the service:
 
@@ -279,7 +279,7 @@ kubectl describe svc go-demo-2-db
 
 Process involved:
 
-![](_image/k8s_session_2/k8s-svc-3.png)
+![](/assets/images/k8s_session_2/k8s-svc-3.png)
 
 ## Deployment
 
@@ -325,7 +325,7 @@ kubectl rollout undo deployment/nginx-deployment
 
 #### Kubernetes Cluster Overview
 
-![k8s cluster](_image/k8s/k8s_cluster.png)
+![k8s cluster](/assets/images/k8s/k8s_cluster.png)
 
 #### Involved Kubernetes Objects
 

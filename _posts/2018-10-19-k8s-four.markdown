@@ -155,7 +155,7 @@ Heapster is deprecated since Kubernetes 1.11. [Release Note](https://github.com/
 
 [Metrics Server](https://github.com/kubernetes-incubator/metrics-server) is a cluster-wide aggregator of resource usage data.
 
-![](_image/k8s_session_4/monitoring_architecture.png)
+![](/assets/images/k8s_session_4/monitoring_architecture.png)
 
 [https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md)
 

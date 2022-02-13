@@ -101,7 +101,7 @@ date: 2018-08-19
 
 ## Kubernetes Cluster
 
-![k8s cluster](_image/k8s/k8s_cluster.png)
+![k8s cluster](/assets/images/k8s/k8s_cluster.png)
 
 ##Kubernetes Concept
 
@@ -160,7 +160,7 @@ date: 2018-08-19
 
 ## Pod Lifecycle
 
-![](_image/k8s_session_1/kubernetes-pod-life-cycle.jpg)
+![](/assets/images/k8s_session_1/kubernetes-pod-life-cycle.jpg)
 
 ## Create a Pod
 
@@ -180,7 +180,7 @@ eval $(minikube docker-env)
 docker ps | grep 'mongo'
 ```
 
-![](_image/k8s_session_1/single_pod.png)
+![](/assets/images/k8s_session_1/single_pod.png)
 
 
 
@@ -278,7 +278,7 @@ kubectl describe -f pod/db.yml
 * Kubelet
   * Make sure the assigned pods are running on the node.
 
-![](_image/k8s_session_1/create_pod_process.png)
+![](/assets/images/k8s_session_1/create_pod_process.png)
 
 ### Running Multiple Containers In A Single Pod
 
@@ -439,17 +439,17 @@ Get Pods:
 kubectl get pods --show-labels
 ```
 
-![](_image/k8s_session_1/replicaset.png)
+![](/assets/images/k8s_session_1/replicaset.png)
 
 Process of creating a ReplicaSet:
 
-![](_image/k8s_session_1/rs_create_process.png)
+![](/assets/images/k8s_session_1/rs_create_process.png)
 
 
 
 Cluster View:
 
-![](_image/k8s_session_1/rs_create_cluster_view.png)
+![](/assets/images/k8s_session_1/rs_create_cluster_view.png)
 
 Delete the ReplicaSet:
 
