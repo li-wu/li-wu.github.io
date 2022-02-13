@@ -1,0 +1,22 @@
+---
+date: 2017-01-07 22:28 +0800
+title: DevDocs
+categories: misc
+---
+
+之前用Dash来搜索文档，但是每次搜索都要等待10秒左右实在是不能忍受。找到一个替代的工具[DevDocs](http://devdocs.io/), 能很好地替代Dash。开源，免费，可以离线使用这些特点使得DevDocs用起来比Dash更省心一些（主要是Dash太贵了）。
+
+如果你喜欢使用浏览器来搜索文档，可以把DevDocs保存为一个书签或者自己定义一个工作流来搜索。这里可以使用nativefier这个工具来生成一个app直接在安装在Mac上当做一个应用来使用。
+
+### 安装nativefier
+```
+npm install nativefier -g
+```
+
+### 从[DevDocs](http://devdocs.io/)创建一个Native的桌面应用
+```
+nativefier 'devdocs.io' --icon a.icns
+```
+
+将生成的app直接复制到Applications目录下就行。
+

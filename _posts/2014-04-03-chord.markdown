@@ -1,0 +1,29 @@
+---
+title: Chord-A Scalable Peer-to-peer Lookup Service for Internt Application
+date: 2014-04-03 19:13:14 +0800
+categories: paper
+---
+
+这篇文章是2001年SIGCOMM上面的，是2000年之后系统类文章引用数最高的一篇文章。Chord是一种在P2P网络中快速定位资源的算法，它并不关心资源的存储，所以Chord提供的接口非常简单，只有set和get两个接口。我想这篇论文之所以引用数这么高，和它提供的简单接口，可扩展性，高效率，查找正确性等特点是分不开的。
+
+## BitTorrent
+我们常用的P2P协议是BitTorrent，原理大概是：文件发布者首先根据要发布的文件生成一个.torrent的文件，即'种子文件'，种子文件本质上是一个文本文件，包含了Tracker信息和文件信息两部分。下载时，BT客户端首先解析种子文件得到Tracker地址，然后连接Tracker服务器。Tracker服务器回应下载者的请求，提供下载者其他下载者（包括发布者）的IP。下载者再连接其他下载者，根据种子文件，两者分别告知对方自己已经有的块，然后交换对方所没有的数据。此时不需要其他服务器参与，分散了单个线路上的数据流量，因此减轻了服务器负担。下载者每得到一个块，需要算出下载块的Hash验证码与种子文件中的对比，如果一样则说明块正确，不一样则需要重新下载这个块。
+
+## DHT网络
+DHT全称为(Distributed Hash Table)，是一种分布式的存储方法。在不需要服务器的情况下，每个客户端负责一个小范围的路由，并负责存储一小部分数据，从而实现整个DHT网络的寻址和存储。使用支持该技术的BT下载软件，用户无需连上Tracker就可以下载，因为软件会在DHT网络中寻找下载同一文件的其他用户并与之通讯，开始下载任务。
+
+DHT的主要思想是：首先，每条文件索引被表示成一个(K, V)对，K称为关键字，可以是文件名（或文件的其他描述信息）的哈希值，V是实际存储文件的节点的IP地址（或节点的其他描述信息）。所有的文件索引条目(即所有的（K, V）对)组成一张大的文件索引哈希表，只要输入目标文件的K值，就可以从这张表中查出所有存储该文件的节点地址。然后，再将上面的大文件哈希表分割成很多局部小块，按照特定的规则把这些小块的局部哈希表分布到系统中的所有参与节点上，使得每个节点负责维护其中的一块。这样，节点查询文件时，只要把查询报文路由到相应的节点即可（该节点维护的哈希表分块中含有要查找的(K,V)对）。
+
+## Chord的实现
+Chord通过把Node和Key映射到相同的空间而保证一致性哈希，为了保证哈希的非重复性，Chord选择SHA-1作为哈希函数，SHA-1会产生一个2160的空间，每项为一个16字节（160bit）的大整数。我们可以认为这些整数首尾相连形成一个环，称之为Chord环。整数在Chord环上按大小顺时针排列，Node（机器的IP地址和Port）与Key（资源标识）都被哈希到Chord环上，这样我们就假定了整个P2P网络的状态为一个虚拟的环，因此我们说Chord是结构化的P2P网络。
+
+每个节点按照规则存储一定的路由信息，这样就能在一定时间范围内找到对应key的value。这样一个具体的过程可以参照下面两个博客和PPT里面的阐述，讲得比我说的更加清楚。
+
+### How DHT protocol works?
+> Lets say im joining a p2p network and i want to share some files. For these files, hashmap keys are generated and "traveled" through the network until the nodes who are responsible for these generated keys are accessed. Then each of these nodes add in his list a record that says "the guy with the x IP address has the file that is related with the specified key.When i search for a file, the hashmap key is generated for this file and travels the network until the node responsible for this key is found. Then this node is communicates with me and send me the IP addresses for the nodes that hosts the real data.
+
+参考：
+1. [http://zh.wikipedia.org/wiki/BitTorrent协议](http://zh.wikipedia.org/wiki/BitTorrent%E5%8D%8F%E8%AE%AE)
+2. [http://blog.csdn.net/chen77716/article/details/6059575](http://blog.csdn.net/chen77716/article/details/6059575)
+3. [http://www.cnblogs.com/gnuhpc/archive/2012/01/13/2321476.html](http://www.cnblogs.com/gnuhpc/archive/2012/01/13/2321476.html)
+4. [http://www.cse.buffalo.edu/~okennedy/courses/cse704fa2012/8.1-Chord.ppt](http://www.cse.buffalo.edu/~okennedy/courses/cse704fa2012/8.1-Chord.ppt)

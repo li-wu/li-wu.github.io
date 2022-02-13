@@ -1,0 +1,148 @@
+---
+title: Kubernetes Volume
+date: 2019-08-27
+categories: Kubernetes
+---
+
+
+
+Github: https://github.com/vfarcic/k8s-specs
+
+
+
+Start minikube and enable `ingress` :
+
+```shell
+minikube start --vm-driver=virtualbox
+minikube addons enable ingress
+```
+
+### hostPath
+
+Start a pod called `docker` based on the docker image:
+
+```shell
+kubectl run docker --image=docker:17.11 --restart=Never docker image ls
+```
+
+Show the pod status:
+
+```shell
+kubectl get pods --show-all
+```
+
+Show the logs:
+
+```shell
+kubectl logs docker
+```
+
+Delete the pod:
+
+```shell
+kubectl delete pod docker
+```
+
+`hostPath` allows us to mount a file or a directory from a host to Pods and, through them, to containers. Other types are `Directory/DirectoryOrCreate`, `File/FileOrCreate`, `Socket`, `CharDevice`, `BlockDevice`
+
+
+
+Create the pod:
+
+```shell
+kubectl create -f volume/docker.yml
+```
+
+List the docker images:
+
+```
+kubectl exec -it docker -- docker image ls
+```
+
+Delete the pod:
+
+```shell
+kubectl delete -f volume/docker.yml
+```
+
+### emptyDir
+
+Show the yml definition:
+
+```shell
+cat volume/jenkins.yml
+```
+
+Create the object:
+
+```shell
+kubectl create -f volume/jenkins.yml --record --save-config
+kubectl rollout status deploy jenkins
+```
+
+Open in browser:
+
+```shell
+open "http://$(minikube ip)/jenkins"
+```
+
+
+
+Get the pod name:
+
+```shell
+POD_NAME=$(kubectl get pods \
+    -l service=jenkins,type=master \
+    -o jsonpath="{.items[*].metadata.name}")
+```
+
+Kill the main process:
+
+```
+kubectl exec -it $POD_NAME kill 1
+```
+
+
+
+Get the pods:
+
+```
+kubectl get pods
+```
+
+Open in browser:
+
+```shell
+open "http://$(minikube ip)/jenkins"
+open "http://$(minikube ip)/jenkins/newJob"
+```
+
+
+
+```shell
+cat volume/jenkins-empty-dir.yml
+```
+
+
+
+Apply it:
+
+```shell
+kubectl apply -f volume/jenkins-empty-dir.yml
+```
+
+Wait the rollout finish:
+
+```shell
+kubectl rollout status deploy jenkins
+```
+
+Do the same process above and the job is persistent.
+
+
+
+An `emptyDir` Volume is created when a Pod is assigned to a node. It will exist for as long as the Pod continues running on that server.
+
+`emptyDir` can survive container failures. When a container crashes, a Pod is not removed from the node. Instead, Kubernetes will recreate the failed container inside the same Pod and, thus, preserve the emptyDir Volume.
+
+-End-

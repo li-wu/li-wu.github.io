@@ -1,0 +1,43 @@
+---
+title: 我的常用软件
+categories: Software
+date: 2018-07-28
+---
+
+常用软件列表：
+
+* 日常
+  * WeChat
+  * Telegram
+  * Dropbox
+  * Typora
+  * TickTick
+  * RecordIt
+  * Alfred
+  * Go2Shell
+  * Itsycal
+  * Spectacle
+  * Movist
+  * Evernote
+  * ShadowsocksX
+  * IINA
+  * eZip
+* 开发
+  * Atom
+  * Virtual Studio Code
+  * PyCharm
+  * IntelliJ IDEA
+  * Royal TSX
+  * iTerm
+    * oh-my-zsh
+    * solarized
+  * Postman
+  * DevDocs
+  * Docker
+* 其它
+  * Popcorn-Time
+  * Rodeo
+  * UnImage
+  * QQ
+  * uTorrent
+

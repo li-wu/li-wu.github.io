@@ -1,0 +1,348 @@
+---
+title: Kubernetes Cluster Management
+categories: Kubernetes
+date: 2018-10-19
+---
+
+# What we have learned
+* What is a Pod?
+  * Minimal unit for Kubermetes
+* Create a Pod
+  * `kubectl run db --image mongo`
+  * Declarative way using `yaml`
+* Monitor Pod health by using `livenessProbe`
+* Using `RepicaSet` to scale Pod
+* What is a Service?
+  * Service is an abstraction that defines a set of Pods and a policy to access them
+* Service Type
+  * Cluster IP
+  * NodePort
+  * LoadBalancer
+  * ExternalName
+* Create a Service
+  * Using `expose`
+    * `kubectl expose rs go-demo-2 --name=go-demo-2-svc  --target-port=28017 --type=NodePort`
+  * Declarative way using `yaml`
+    * `cat go-demo-2-svc.yml`
+* Use `Deployment` to create `ReplicaSet`
+* Application Type
+  * Long-running => Deployment
+  * Batch => Job/CronJob
+  * Node-daemon => DaemonSet
+  * Stateful Application => StatefulSet
+* Docker Network
+* Kubernetes Network
+  * Pod Network
+  * Service Network
+  * NodePort, LoadBalancer and Ingress
+
+# Cluster Management
+
+* Node isolation and recovery
+* Scale the Kubernetes cluster
+* Manage Namespace and Context
+* Cloud Kubernetes Cluster Management
+
+#### Node isolation and recovery
+
+```shell
+kubectl replace -f unschedule_node.yaml
+```
+
+Use `kubectl patch`:
+
+```shell
+kubectl patch node k8s-node-1 -p '{"spec": {"unschedulable": true}}'
+```
+
+Use `kubectl cordon`:
+
+```shell
+kubectl cordon k8s-node-1
+kubectl uncordon k8s-node-1
+```
+
+#### Scale the Kubernetes cluster
+
+* Install `Docker`, `kubelet`, `kube-proxy`
+* Config start params for `kubelet` and `kube-proxy`
+* Config Master URL to point to the master node of the cluster
+
+#### Manage Namespace and Context
+
+Create `dev` and `prod` namespaces:
+
+```shell
+kubectl create -f namespace-dev.yaml
+kubectl create -f namespace-prod.yaml
+```
+
+```shell
+kubectl config set-context ctx-dev --namespace=development --cluster=docker-for-desktop-cluster --user=docker-for-desktop
+```
+
+```shell
+kubectl config set-context ctx-prod --namespace=production --cluster=docker-for-desktop-cluster --user=docker-for-desktop
+```
+
+Try to run a pod in production namespace:
+
+```shell
+kubectl run db --image mongo
+```
+
+#### Cloud Kubernetes Cluster Management
+
+KOPS: https://github.com/kubernetes/kops
+
+The easiest way to get a production grade Kubernetes cluster up and running.
+
+# Metrics and Logs Collection and Analysis
+
+### Horizontal Pod Autoscaling
+
+Enable Pod to autoscale horizontally. 
+
+* Before Kubernetes 1.6, metrics are collected via `kubelet`
+* After Kubernetes 1.6, metrics are collected via `API Server`, `Heapster`, `kube-aggregator`
+
+![](/assets/images/k8s_session_4/hpa.png)
+
+* Only apply to `Deployment` and `ReplicaSet`
+* Only support autoscalling based on Pod CPU utilization for **V1**
+* Support autoscalling based on Memory and other custom metrics for **V1alpha**
+
+### Manage HPA
+
+Manage HPA using `kubectl` as other resource object such as  `Deployment`:
+
+```shell
+kubectl create hpa
+kubectl get hpa
+kubectl describe hpa
+kubectl delete hpa
+```
+
+Create HPA using `kubectl autoscale`:
+
+```shell
+kubectl autoscale (-f FILENAME | TYPE NAME | TYPE/NAME) [--min=MINPODS] --max=MAXPODS
+[--cpu-percent=CPU] [flags] [options]
+```
+
+Sample:
+
+```shell
+kubectl autoscale deployment foo --min=2 --max=5 --cpu-percent=80
+```
+
+# Cluster and Application Monitoring
+
+### Heapster
+
+Heapster is a default installed plugin for Kubernetes cluster. HPA uses Heapster as `Resource Metrics API` and get metrics data from it.
+
+Start Heapster with option `--api-server=true` to achive this.
+
+* Heapster can collect `cAdvisor` data from Node.
+* Heapster can get CPU, Memory, Network and Disk metrics grouped by Kubernetes resources such as Pod and Namespace.
+
+![](/assets/images/k8s_session_4/heapster.png)
+
+### Metrics Server
+
+Heapster is deprecated since Kubernetes 1.11. [Release Note](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md#new-deprecations).
+
+[Metrics Server](https://github.com/kubernetes-incubator/metrics-server) is a cluster-wide aggregator of resource usage data.
+
+![](_image/k8s_session_4/monitoring_architecture.png)
+
+[https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/instrumentation/monitoring_architecture.md)
+
+### Prometheus
+
+Prometheus is open-sourced by SoundCloud in 2015 and become the second project in CNCF in 2016.
+
+![](/assets/images/k8s_session_4/prometheus.jpg)
+
+#### Main functions
+
+* Multi-Demensional Data
+* Powerfull Query (PromQL)
+* Efficient Storage (Support both local and remote)
+* Pull using http protocol
+* Easy opeation and friendly UI
+
+#### Main Process
+
+* Prometheus server periodically get configuration data from target
+* When the pulled data is bigger than configed cache, flush to disk
+* Prometheus can config rule and send alerts when condition triggers
+* AlertManger receives the alerts, aggregate, dedup and send it
+
+#### First Look at Prometheus
+
+Prometheus Config File:
+
+```yaml
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+    - targets: ['localhost:9090']
+```
+
+Start Prometheus:
+
+```shell
+./prometheus --config.file=prometheus.yml
+```
+
+#### Use Prometheus for Kubernetes
+
+![](/assets/images/k8s_session_4/prometheus.png)
+
+Using GKE and [pre-requirement](https://github.com/coreos/prometheus-operator/issues/357):
+
+```shell
+kubectl create clusterrolebinding my-cluster-admin-binding --clusterrole=cluster-admin --user=project.owner@gmail.com
+```
+
+Deploy Prometheus via [GiantSwarm](https://github.com/giantswarm/kubernetes-prometheus):
+
+```shell
+kubectl apply \
+  --filename https://raw.githubusercontent.com/giantswarm/kubernetes-prometheus/master/manifests-all.yaml
+```
+
+List the service in namespace `monitoring`:
+
+```shell
+kubectl get svc --namespace monitoring
+```
+
+Use port forward to visit grafana:
+
+```shell
+export POD_NAME=$(kubectl get pods --namespace monitoring -l "app=grafana,component=core" -o jsonpath="{.items[0].metadata.name}")
+```
+
+```shell
+kubectl port-forward --namespace monitoring $POD_NAME 3000:3000
+```
+
+Visit [http://localhost:3000](http://localhost:3000) with admin/admin credential.
+
+## Log Collection
+
+* Splunk
+* ELK
+* Flume + Storm + Kafka + HDFS
+
+# TroubleShooting
+
+#### Kubernetes Object Related Problems
+
+```shell
+kubectl describe pod <pod_name>
+```
+
+Possible reasons for Pod running failed:
+
+* No available node for scheduling
+* Resource Quata Management on and no available resource on the destination Node
+* Pulling image failed
+
+`kubctl describe` applies to other resources as well:
+
+* Node
+* Deployment
+* Service
+* Namespace
+
+#### Service or Container Problems
+
+```shell
+kubectl logs <pod_name>
+```
+
+Use `-c` if the pod contains multiple containers:
+
+```shell
+kubectl logs <pod_name> -c <container_name>
+```
+
+If the container is down, `Volume` or other tools like `fluentd` are needed for the logs collection.
+
+#### Cluster Problems
+
+If Kubernetes cluster is managed by Linux using `systemd`:
+
+```
+systemctl status kube-controller-manager -l
+```
+
+Or config the logs directory for Kubernetes:
+
+```shell
+--logtostderr=false: do not output to stderr
+--log-dir=/var/log/kubernetes: log folder
+```
+
+#### Some Common Problems
+
+* Pod status is `pending` and Event has `image pull failed` keyword
+  * Make sure the repository is accessable from the Kubernetes Node
+* Pod status is `running` but not `ready` and restarts count inceases
+  * Change the start command to `foreground` instead of `backgroud`
+* Compute resources related:
+  * Pod status is `pending` and the error msg is `FailedScheduling`
+    * Add more Nodes
+    * Stop some Pods to release resources
+    * Check the Pod configuration about `requests` and `limits`
+  * Container is forces `Terminated`
+    * Resources used by container exceed the `Limits`
+
+# Recap
+
+* Add/remove a Node for scheduling
+* Scale up a cluster by adding new nodes
+* Namespace and context
+* Using `KOPS` to manage cloud kubernetes cluster
+* HPA
+* Heapster => Metrics Server
+* Prometheus and Grafana
+* Troubleshooting Tips
+
+# References
+
+* [https://github.com/giantswarm/kubernetes-prometheus](https://github.com/giantswarm/kubernetes-prometheus)
+* [https://jimmysong.io/kubernetes-handbook/practice/prometheus.html](https://jimmysong.io/kubernetes-handbook/practice/prometheus.html)
+* [https://prometheus.io/](https://prometheus.io/)
+* [https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/)
+* [https://kubernetes.feisky.xyz/pai-cuo-zhi-nan/index](https://kubernetes.feisky.xyz/pai-cuo-zhi-nan/index)
+* [namespace-prod.yaml](https://gist.github.com/li-wu/2c82595c49728178be254ebd6f4b3ebb)
+* [namespace-dev.yaml](https://gist.github.com/li-wu/487a10a62509b25be900a3ac7c5efbd3)

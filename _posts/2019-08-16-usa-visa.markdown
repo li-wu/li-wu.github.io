@@ -1,0 +1,50 @@
+---
+title: USA Visa Application
+date: 2019-08-16
+categories: misc
+---
+
+## Basic information
+
+Here are some basic information you may need in different places:
+
+- Company Chinese name: 【】
+- Company English name:  【】
+- Shanghai office mailing address: 【】
+- Visa type: B1/B2
+
+## Processes
+
+- Take a photo for US visa application. A digital copy is needed when filling out DS160 form below. You can do it on the photo taking machines in many of the subway stations in Shanghai (like the one in Jiangwan stadium subway station), once you take the photo there, besides the hard copy of your photo (with a barcode), you need to go to [their website](http://photomechina.com/) to email you a copy of your digital photo with the barcode. Of course, you can take the photo in any photo studio, do remember to bring your USB thumb to get the digital copy.
+- Fill out DS160 form (Nonimmigrant Visa Application) online [here](https://ceac.state.gov/genniv/). Do take a note of your application id (something like 'AA003RX9YZ') once you start your filling of the form, and you may [retrieve](https://ceac.state.gov/genniv/Common/Recovery.aspx) your application later via this id. Before you submitting the form, you could save the form data into a binary dat file using the website so that you can reuse it next time. Once you finish the DS160, you do NOT need to print the entire DS160 application form, however, you need to print the DS160 confirmation page (please keep both a soft copy and a hard copy). On the DS160 confirmation page, it contains a barcode for your application id which will be scanned when you do the visa interview. 
+- Prepare materials
+  - Draft travel invitation letter according to template
+  - Draft your resume according to template
+  - Draft your travel schedule according to template
+  - 12 basic pieces of information about your own
+  - Dispatch Letter
+- Prepare some more materials with company sign/stamp needed
+  - A stamped copy of company business license
+  - Draft the dispatch letter according to template
+
+##Documents before interview
+
+- Your passport (MUST)
+- Hard copy of your DS160 confirmation page (MUST)
+- The printed pdf with application details, DS160 confirmation number, and UID (SHOULD)
+- Two hard copies of your photo (MAY)
+- Invitation letter (MAY)
+- Dispatch letter (MAY)
+- Company business license (MAY)
+- Your ID card (MAY)
+- Your residence booklet (MAY)
+- Anything else like certificate of title to house property (MAY)
+
+## Other Tips
+
+* Interview appointment website: https://cgifederal.secure.force.com/
+
+- You are disallowed to bring any bag or electronic devices like your mobile phone into the US consulate. If you need to bring a bag with you, you can store them to Jiangning Rd. #66 (it is around the corner, you can find it if you see a 桂林米粉), which seems to be the most convenient place for this purpose. It may cost you 10 or 20 yuan.
+- A more detail article: [http://www.mafengwo.cn/gonglve/ziyouxing/245461.html](http://www.mafengwo.cn/gonglve/ziyouxing/245461.html)
+
+-End-

@@ -1,0 +1,531 @@
+---
+title: Kubernetes Session One
+categories: Kubernetes
+date: 2018-08-19
+---
+
+# Kubernetes Topics
+
+### Resource Management
+
+* Hands on lab to deep dive into the following concepts
+  - API Object
+  - K8S Cluster
+  - Pod
+  - ReplicaSet
+  - Service
+  - Deployment
+* Features of k8s
+  - Auto Scalable
+  - High Available
+
+### Network
+
+* Configuration
+* Service
+* Service Discovery
+* DNS
+
+### Cluster Management and Monitoring
+
+- Cluster management
+
+  - Node management
+  - Resource Label
+  - Namespace management
+  - Resource management
+  - High availability management
+
+- Log collection and analysis
+
+  - Solution
+
+    - Heapster
+    - Prometheus
+
+    - ELK
+    - Splunk
+
+  - Logs and metrics
+
+    - System event
+    - Container log
+    - Service log
+
+- Troubleshooting
+
+### Storage
+
+* Volume
+* Persistent Volume
+* ConfigMap
+* Storage Class
+
+### Security
+
+* Store Confidential Information
+* Securing Kubernetes Clusters
+* Authorizing/RBAC/RoleBindings/ClusterRoleBindings
+
+### Domain Application
+
+* Microservice
+* Bigdata
+  * Spark
+* Deep Learning
+  * Tensorflow
+* Serverless application
+* CI/CD
+
+### Compare with Other Orchestration Platform
+
+* Introduction to docker swarm
+* Comparing docker swarm with K8S
+* Introduction to Mesos and Marathon
+* Comparing Marathon with K8S
+
+# Resource Management
+
+- Hands on lab to deep dive into the following concepts
+  - API Object
+  - K8S Cluster
+  - Pod
+  - ReplicaSet
+  - Service
+  - Deployment
+- Features of k8s
+  - Auto Scalable
+  - High Available
+
+## Recap of Kubernetes 101
+
+## Kubernetes Cluster
+
+![k8s cluster](_image/k8s/k8s_cluster.png)
+
+##Kubernetes Concept
+
+* Pod
+* ReplicaSet
+* Service
+* Volume
+* Namespace
+
+## How to get started
+
+* Minikube
+* Docker Native Support (Since 17.12.0)
+* Google Cloud Kubernetes Engine
+
+
+
+## Kubernetes Resource Object
+
+* Persistent entities in Kubernetes system
+* Kubernetes use these entities to represent the state of cluster
+  * What containerized applications are running on which nodes
+  * Resources avaiable to those applications
+  * The policies around how application behave, restart/upgrade/fault-tolerant
+* Manipulated via Kubernetes API
+  * GO Client
+  * Python Client
+
+| Category             | Name                                                         |
+| -------------------- | ------------------------------------------------------------ |
+| Resource Object      | Pod、ReplicaSet、ReplicationController、Deployment、StatefulSet、DaemonSet、Job、CronJob、HorizontalPodAutoscaling |
+| Configuration Object | Node、Namespace、Service、Secret、ConfigMap、Ingress、Label、ThirdPartyResource、 ServiceAccount |
+| Storage Object       | Volume、Persistent Volume                                    |
+| Strategy Object      | SecurityContext、ResourceQuota、LimitRange                   |
+
+## Application Type
+
+| Application Type     | Resource Object |
+| -------------------- | --------------- |
+| Long-running         | Deployment      |
+| Batch                | Job/CronJob     |
+| Node-daemon          | DaemonSet       |
+| Stateful Application | StatefulSet     |
+
+## What is a Pod?
+
+* Minimal unit for Kubermetes
+  * Bricks to build a house
+  * Container for Docker, Swarm
+  * Running process for a cluster
+* Encapsulates  one or more containers
+  * Unique network IP
+  * Attach storage resources
+  * Decide how containers should run
+* Everything is tightly coupled
+
+## Pod Lifecycle
+
+![](_image/k8s_session_1/kubernetes-pod-life-cycle.jpg)
+
+## Create a Pod
+
+```shell
+kubectl run db --image mongo
+```
+
+```shell
+kubectl get pods
+```
+
+```shell
+eval $(minikube docker-env)
+```
+
+```shell
+docker ps | grep 'mongo'
+```
+
+![](_image/k8s_session_1/single_pod.png)
+
+
+
+```shell
+kubectl delete deployment db
+```
+
+### Imperative VS Declarative
+
+Yet this is not the best way to run Pods. 
+
+Benefits of declarative approach:
+
+* **Idempotency**
+* **Predictability**
+* **Traceability**
+
+### Declarative Way to Create a Pod
+
+```shell
+cat pod/db.yml
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: db
+  labels:
+    type: db
+    vendor: MongoLabs
+spec:
+  containers:
+  - name: db
+    image: mongo:3.3
+    command: ["mongod"]
+    args: ["--rest", "--httpinterface"]
+```
+
+* Kind
+  * What you want to do? Create a Pod.
+* apiVersion
+  * Which version do you want to use?
+* metadata
+  * Addional data for the object. Does not affect the behaviour of object.
+* spec
+  * The desired state of the object
+
+```shell
+kubectl create -f pod/db.yml
+```
+
+Get pods information:
+
+```shell
+kubectl get pods
+```
+
+```
+kubectl get pods -o wide
+```
+
+Or you can use `-o json` or `-o yaml` to define the output format.
+
+Get pod logs:
+
+```shell
+kubectl logs db
+```
+
+Execute command in the pod conainer:
+
+```
+kubectl exec db ps aux
+```
+
+Get detail information of the specified resource:
+
+```shell
+kubectl describe pod db
+```
+
+Better way to `describe` , no need to remember the resource name:
+
+```shell
+kubectl describe -f pod/db.yml
+```
+
+### Involving Components and Process
+
+* API Server
+  * Most of the coordination in Kubernetes consists of a component writing to the API Server resource that another component is watching. The second component will then react to changes almost immediately.
+* Scheduler
+  * Watch for unassigned pods and assign to nodes with available resources matching pod requirements.
+* Kubelet
+  * Make sure the assigned pods are running on the node.
+
+![](_image/k8s_session_1/create_pod_process.png)
+
+### Running Multiple Containers In A Single Pod
+
+```shell
+cat pod/go-demo-2.yml
+```
+
+Output:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-demo-2
+  labels:
+    type: stack
+spec:
+  containers:
+  - name: db
+    image: mongo:3.3
+  - name: api
+    image: vfarcic/go-demo-2
+    env:
+    - name: DB
+      value: localhost
+```
+
+Create and get detail of the pods:
+
+```shell
+kubectl create -f pod/go-demo-2.yml
+```
+
+```shell
+kubectl get -f pod/go-demo-2.yml
+```
+
+```shell
+kubectl get -f pod/go-demo-2.yml -o jsonpath="{.spec.containers[*].name}"
+```
+
+Execute command in the `db` container
+
+```shell
+kubectl exec -it -c db go-demo-2 ps aux
+```
+
+List logs of the `db` container
+
+```shell
+kubectl logs go-demo-2 -c db
+```
+
+Remove the Pod:
+
+```shell
+kubectl delete -f pod/go-demo-2.yml
+```
+
+### Monitoring Health
+
+```shell
+cat pod/go-demo-2-health.yml
+```
+
+Output:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go-demo-2
+  labels:
+    type: stack
+spec:
+  containers:
+  - name: db
+    image: mongo:3.3
+  - name: api
+    image: vfarcic/go-demo-2
+    env:
+    - name: DB
+      value: localhost
+    livenessProbe:
+      httpGet:
+        path: /this/path/does/not/exist
+        port: 8080
+      initialDelaySeconds: 5
+      timeoutSeconds: 2 # Defaults to 1
+      periodSeconds: 5 # Defaults to 10
+      failureThreshold: 1 # Defaults to 3
+```
+
+```yaml
+kubectl create -f pod/go-demo-2-health.yml
+```
+
+```yaml
+kubectl describe -f pod/go-demo-2-health.yml
+```
+
+### Scaling Pods
+
+```shell
+cat rs/go-demo-2.yml
+```
+
+Output:
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: go-demo-2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      type: backend
+      service: go-demo-2
+  template:
+    metadata:
+      labels:
+        type: backend
+        service: go-demo-2
+        db: mongo
+        language: go
+    spec:
+      containers:
+      - name: db
+        image: mongo:3.3
+      - name: api
+        image: vfarcic/go-demo-2
+        env:
+        - name: DB
+          value: localhost
+        livenessProbe:
+          httpGet:
+            path: /demo/hello
+            port: 8080
+```
+
+Create the ReplicaSet:
+
+```shell
+kubectl create -f rs/go-demo-2.yml
+```
+
+Get ReplicaSet:
+
+```shell
+kubectl get rs
+```
+
+Get Pods:
+
+```shell
+kubectl get pods --show-labels
+```
+
+![](_image/k8s_session_1/replicaset.png)
+
+Process of creating a ReplicaSet:
+
+![](_image/k8s_session_1/rs_create_process.png)
+
+
+
+Cluster View:
+
+![](_image/k8s_session_1/rs_create_cluster_view.png)
+
+Delete the ReplicaSet:
+
+```shell
+kubectl delete -f rs/go-demo-2.yml --cascade=false
+```
+
+ReplicaSet is removed but pods are not:
+
+```
+kubectl get rs
+kubectl get pods
+```
+
+Create the ReplicaSet again with `--save-config`:
+
+```shell
+kubectl create -f rs/go-demo-2.yml --save-config
+```
+
+```
+kubectl get pods
+```
+
+```shell
+cat rs/go-demo-2-scaled.yml
+```
+
+```shell
+kubectl apply -f rs/go-demo-2-scaled.yml
+```
+
+Assign the pod name:
+
+```shell
+POD_NAME=$(kubectl get pods -o name | tail -1)
+```
+
+Delete the pod:
+
+```shell
+kubectl delete $POD_NAME
+```
+
+See what happens:
+
+```shell
+kubectl get pods
+```
+
+Reget the pod name:
+
+```shell
+POD_NAME=$(kubectl get pods -o name | tail -1)
+```
+
+Remove the service label:
+
+```shell
+kubectl label $POD_NAME service-
+```
+
+Describe the pod and add the label back"
+
+```shell
+kubectl describe $POD_NAME
+kubectl get pods
+kubectl label $POD_NAME service=go-demo-2
+kubectl get pods
+```
+
+
+
+# References
+
+* [https://github.com/vfarcic/k8s-specs](https://github.com/vfarcic/k8s-specs)
+* [https://jimmysong.io/kubernetes-handbook/concepts/objects.html](https://jimmysong.io/kubernetes-handbook/concepts/objects.html)
+* [https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/)
+

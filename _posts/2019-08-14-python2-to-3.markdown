@@ -1,0 +1,55 @@
+---
+title: Python2 to Python3
+date: 2019-08-14
+categories: Python
+---
+
+最近在做Python2到Python3的迁移，遇到了一些问题记录一下。 
+
+官方给出了一个迁移到Python3的[参考文档](https://docs.python.org/3/howto/pyporting.html#prevent-compatibility-regressions)，基本上主要步骤如下：
+
+* 评估要支持的Python版本，主要是只支持Python3，还是要兼容Python2.7
+* 了解Python3和Python2的差异
+  * [http://python-future.org/compatible_idioms.html](http://python-future.org/compatible_idioms.html)
+  * [http://python3porting.com/problems.html](http://python3porting.com/problems.html)
+* 评估能利用的第三方工具，比如`2to3`, `six`等
+* 确保有足够的测试（单元测试和功能测试）来确保改动不影响功能
+
+
+
+我是用的`2to3`这个工具来辅助迁移的，大部分的迁移的改动这个工具都能帮你覆盖。我是对每个文件来应用`2to3`，然后看具体的改动是否有没有覆盖到的。有一些问题没法完全覆盖，这些需要自己额外去看和测试。
+
+* 相对引入`Relative Import`
+* `Bytes`和`String`的使用场景
+* 文件的读写模式
+* `shebang` 
+
+下面是一些遇到的问题和解决办法。
+
+### Bad magic number error
+
+因为我经常在Python2和Python3的venv切换，所以会遇到这个问题，解决的办法很简单，删掉`pyc`文件重新跑就好了。
+
+```shell
+find . -name '*.pyc' -delete
+```
+
+###Attempted relative import with no known parent package
+
+因为原来Python2的代码中有很多相对引入，`2to3`改动之后虽然改成了`from . import test`，但是Python解释器找不到模块所属的包，所以会报这个错误。比较详细的一个解释这篇文章讲得比较清楚: [https://vimiix.com/post/2017/12/29/import-error-relative-no-parent/](https://vimiix.com/post/2017/12/29/import-error-relative-no-parent/)
+
+我自己的解决的办法很简单，就是不用`Relative import`而全部用`Absolute import`，好处是避免了相对引入带来的问题，而且在代码里面不用去改动`sys.path`来引入模块。
+
+### SyntaxError: invalid syntax
+
+这个错误是因为`futures`模块在Python3中变成标准模块了，而不需要在`requirements.txt`中去指定。
+
+### Typeerror cannot serialize '_io.textiowrapper' object
+
+这个问题在上一篇文章里面详细讲过了。
+
+其它问题都是一些常规问题，多数是`string`和`bytes`的问题，遇到一个就去解决一个。比如说`socket.sendall()`这里参数在Python2中是string，在Python3中变成了bytes，迁移的时候一定要注意，不然会有`Socket Broken Pipe`的错误，这种错误很难从错误里面看出具体的信息。
+
+
+
+-End-

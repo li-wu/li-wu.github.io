@@ -1,0 +1,31 @@
+---
+date: 2017-07-16 20:19
+title: ElasticSearch
+categories: log
+---
+
+https://github.com/jacksu/awesome-es/blob/master/README.md
+
+Basic Concept:
+https://www.elastic.co/guide/en/elasticsearch/reference/current/_basic_concepts.html
+
+awesome-es:
+https://github.com/jacksu/awesome-es/blob/master/README.md
+
+https://www.jikexingqiu.com/search?q=elasticsearch
+
+ElasticSearch权威指南<配置管理>
+https://www.elastic.co/guide/cn/elasticsearch/guide/current/_configuration_management.html
+
+管理工具：
+https://github.com/lmenezes/cerebro
+http://www.elastichq.org/
+
+配置最佳实践：
+1. 最好是给集群和节点一个有意义的名字。
+ES会在节点启动的时候随机给节点指定一个名字，一方面会使得管理变得混乱, 另一方面会使日志变得混乱。
+2. 不要将数据，日志和插件的路径配置在安装目录下；
+3. minium_master_nodes对集群的稳定及其重要。
+这个配置就是告诉ES当没有足够master候选节点的时候，不要进行master选举；一般设置为master候选节点的大多数，（master候选节点个数 / 2） + 1。
+4. 集群恢复：recover_after_nodes/expected_nodes/recover_after_time, 避免集群在重启的时候过多的分片交换。
+5. 是用单播代替组播，防止节点无意中加入集群。

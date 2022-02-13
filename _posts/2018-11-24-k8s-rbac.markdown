@@ -1,0 +1,186 @@
+---
+title: RBAC in Kubernetes
+date: 2018-11-24
+categories: Kubernetes
+---
+
+首先要了解"数字签名"（digital signature）和"数字证书"（digital certificate）的基本概念。 阮一峰有一篇译文讲得还是相对比较通俗易懂的。可以先看这篇文章：[http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html](http://www.ruanyifeng.com/blog/2011/08/what_is_a_digital_signature.html)。
+
+
+
+简单来说，私钥和公钥是为了加密和解密传递的信息的，但是存在的问题是公钥有可能会被伪造，CA（证书中心）的目的就是为公钥作认证的。证书中心用自己的私钥对公钥和一些相关的信息一起加密，生成数字证书(Digital Certificate)。这样收信人就可以用CA的公钥解开数字证书，拿到发信人的公钥，从而确定数字签名是否为发信人所发送的。
+
+
+
+RBAC即基于角色的权限访问控制（Role Based Access Control），在Kubernetes 1.6之后是默认开启的。
+
+#### Role
+
+一个角色（Role）代表一组访问权限的规则，只能定义允许规则，而不能定义否定规则。一个角色只能用来定义单个namespace的资源访问规则。下面是一个角色的示例定义，这里定义了一个名字为`pod-reader`的角色，有访问defaul这个namespace中的pod读权限。
+
+```yaml
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: default
+  name: pod-reader
+rules:
+- apiGroups: [""] # "" indicates the core API group
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+```
+
+#### ClusterRole
+
+ClusterRole和Role一样是用来定义访问权限规则的，但针对的是集群范围内的资源。所以可以定义比如集群节点，非资源型endpoint以及所有namespace的资源。
+
+#### RoleBinding
+
+RoleBinding就是把在Role中定义的访问权限给到具体的用户或者一组用户。下面是一个`RoleBinding`的示例，它将名称为`pod-reader`的这个Role所定义的访问权限给到用户`jane`，使得用户`jane`具有访问default这个namespace中pod的读权限。
+
+```yaml
+# This role binding allows "jane" to read pods in the "default" namespace.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: read-pods
+  namespace: default
+subjects:
+- kind: User
+  name: jane # Name is case sensitive
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role #this must be Role or ClusterRole
+  name: pod-reader # this must match the name of the Role or ClusterRole you wish to bind to
+  apiGroup: rbac.authorization.k8s.io
+```
+
+#### ClusterRoleBinding
+
+如果要定义集群范围的访问权限控制，则需要用到ClusterRoleBinding。
+
+到这里你了解到了一些关于Kubernetes `RBAC` 的基本知识，如果你想要了解如何定义更详细的访问策略，你应该去读一下Kubernetes的[官方文档](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)。
+
+####配置RBAC
+
+如果你手头有一个Kubernetes的集群， 有一个小的开发小组正好要使用一个独立的Kubernetes开发环境，你如何通过配置RBAC来配置相应的访问策略？
+
+##### 1. 创建独立的namespace
+
+```shell
+kubectl create namespace office
+```
+
+##### 2. 创建用户凭证
+
+这里使用OpenSSL来生成私钥和证书。
+
+* 创建私钥
+
+  ```shell
+  openssl genrsa -out employee.key 2048
+  ```
+
+* 使用私钥生成证书请求文件（Cerificate Signing Request），注意指定`subj`中的username(CN)和group(O)。
+
+  ```shell
+  openssl req -new -key employee.key -out employee.csr -subj "/CN=employee/O=bitnami"
+  ```
+
+* 找到Kubernetes集群的CA文件，CA文件用来认证集群API的请求并产生必要的证书。通常在集群中`/etc/kubernetes/pki/`这个位置，`ca.crt`和`ca.key`。
+
+* 通过CSR文件生成最终的证书文件`employee.crt`，注意替换下面命令中的`CA_LOCATION`：
+
+  ```shell
+  openssl x509 -req -in employee.csr -CA CA_LOCATION/ca.crt -CAkey CA_LOCATION/ca.key -CAcreateserial -out employee.crt -days 500
+  ```
+
+* 将`employee.crt`和`employee.key`保存到一个安全的位置，比如`/home/employee/.certs/`。
+
+* 为Kubernetes添加新的credentials和context，这里以`minikube`为例：
+
+  ```shell
+  kubectl config set-credentials employee --client-certificate=/home/employee/.certs/employee.crt  --client-key=/home/employee/.certs/employee.key
+  kubectl config set-context employee-context --cluster=minikube --namespace=office --user=employee
+  ```
+
+  如果执行下面命令会出现没有访问权限错误，因为还没有给用户定义任何访问权限。
+
+  ```shell
+  kubectl --context=employee-context get pods
+  ```
+
+##### 3. 创建Role
+
+* 创建一个`role-deployment-manager.yaml`文件，定义了对`Deployments`， `Pods`和`ReplicaSets`的访问权限。
+
+  ```yaml
+  kind: Role
+  apiVersion: rbac.authorization.k8s.io/v1beta1
+  metadata:
+    namespace: office
+    name: deployment-manager
+  rules:
+  - apiGroups: ["", "extensions", "apps"]
+    resources: ["deployments", "replicasets", "pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"] # You can also use ["*"]
+  ```
+
+* Create the role:
+
+  ```shell
+  kubectl create -f role-deployment-manager.yaml
+  ```
+
+##### 4. 绑定Role到employee用户
+
+* 创建一个`rolebinding-deployment-manager.yaml`文件：
+
+  ```
+  kind: RoleBinding
+  apiVersion: rbac.authorization.k8s.io/v1beta1
+  metadata:
+    name: deployment-manager-binding
+    namespace: office
+  subjects:
+  - kind: User
+    name: employee
+    apiGroup: ""
+  roleRef:
+    kind: Role
+    name: deployment-manager
+    apiGroup: ""
+  ```
+
+* 部署RoleBinding
+
+  ```shell
+  kubectl create -f rolebinding-deployment-manager.yaml
+  ```
+
+##### 5. 测试RBAC规则
+
+执行如下命令会成功：
+
+```shell
+kubectl --context=employee-context run --image bitnami/dokuwiki mydokuwiki
+kubectl --context=employee-context get pods
+```
+
+ 如果访问默认的命名空间的资源将会失败：
+
+```shell
+kubectl --context=employee-context get pods --namespace=default
+```
+
+#### References:
+
+* [https://kubernetes.io/docs/reference/access-authn-authz/rbac/](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+* [https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster](https://docs.bitnami.com/kubernetes/how-to/configure-rbac-in-your-kubernetes-cluster/)
+* [https://www.cnblogs.com/lhj588/p/6069890.html](https://www.cnblogs.com/lhj588/p/6069890.html)
+* [https://github.com/kubernetes/kubernetes/blob/master/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/testdata/cluster-roles.yaml](https://github.com/kubernetes/kubernetes/blob/master/plugin/pkg/auth/authorizer/rbac/bootstrappolicy/testdata/cluster-roles.yaml)
+* [https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/](https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/)
+
+
+
+-End-
