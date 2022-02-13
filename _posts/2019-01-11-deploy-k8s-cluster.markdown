@@ -192,7 +192,7 @@ kubeadm token create --print-join-command
 会打印出从Node节点上加入集群的命令，类似下面这样：
 
 ```shell
-kubeadm join --token 5d2dc8.3e93f8449167639b 10.66.128.205:6443 --discovery-token-ca-cert-hash sha256:44a68d4a2c2a86e05cc0d4ee8c9c6b64352c54e450021331c483561e45b34388
+kubeadm join --token <token> 10.66.128.205:6443 --discovery-token-ca-cert-hash <hash>
 ```
 
 #### 验证集群状态
