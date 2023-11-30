@@ -3,6 +3,6 @@
 Blog using GitHub Pages.
 
 ```
-bunlde install
+bundle install
 bundle exec jekyll serve
 ```
