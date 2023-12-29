@@ -1,10 +1,10 @@
 ---
 title: 代码生成（Code Generation）
-date: 2023-12-04
+date: 2023-12-17
 categories: olap
 ---
 
-这个是我在 [`DataFunConf2023-深圳站`](https://www.bagevent.com/event/8519252)上的分享整理的文字内容。
+> 这个是我在 [`DataFunConf2023-深圳站`](https://www.bagevent.com/event/8519252)上的分享整理的文字内容。
 
 ## 代码生成
 
