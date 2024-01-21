@@ -161,10 +161,10 @@ BuyTransaction b;
 ```
 
 ## 引用
-* https://www.geeksforgeeks.org/move-constructors-in-c-with-examples/
-* https://blog.quasardb.net/using-c-containers-efficiently
-* https://www.geeksforgeeks.org/virtual-destructor/
-* https://lefticus.gitbooks.io/cpp-best-practices/content/
-* https://www.educative.io/edpresso/what-is-a-move-constructor-in-cpp
+* [https://www.geeksforgeeks.org/move-constructors-in-c-with-examples/](https://www.geeksforgeeks.org/move-constructors-in-c-with-examples/)
+* [https://blog.quasardb.net/using-c-containers-efficiently](https://blog.quasardb.net/using-c-containers-efficiently)
+* [https://www.geeksforgeeks.org/virtual-destructor/](https://www.geeksforgeeks.org/virtual-destructor/)
+* [https://lefticus.gitbooks.io/cpp-best-practices/content/](https://lefticus.gitbooks.io/cpp-best-practices/content/)
+* [https://www.educative.io/edpresso/what-is-a-move-constructor-in-cpp](https://www.educative.io/edpresso/what-is-a-move-constructor-in-cpp)
 
 
